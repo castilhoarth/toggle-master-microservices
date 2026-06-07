@@ -2,12 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
 )
 
@@ -38,12 +38,30 @@ func main() {
 	}
 
 	// --- Conexão com o Banco ---
-	db, err := connectDB(databaseURL)
+	//db, err := connectDB(databaseURL)
+	//if err != nil {
+	//	log.Fatalf("Não foi possível conectar ao banco de dados: %v", err)
+	//}
+	//alteração para esperar o banco subir
+	var db *sql.DB
+	var err error
+
+	for i := 0; i < 10; i++ {
+		db, err = connectDB(databaseURL)
+		if err == nil {
+			break
+		}
+
+		log.Println("Banco ainda não está pronto... tentando novamente")
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
-		log.Fatalf("Não foi possível conectar ao banco de dados: %v", err)
+		log.Fatalf("Não foi possível conectar ao banco de dados após retries: %v", err)
 	}
 	defer db.Close()
 
+	//---- alteração
 	app := &App{
 		DB:         db,
 		MasterKey:  masterKey,

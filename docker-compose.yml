@@ -1,0 +1,91 @@
+services:
+
+  auth-service:
+    build: ./auth-service-main
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgres://admin:123@postgres-auth:5432/auth_db?sslmode=disable
+      PORT: 8001
+      MASTER_KEY: admin-secreto-123
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+
+  flag-service:
+    build: ./flag-service-main
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgres://admin:123@postgres-flags:5432/flags_db?sslmode=disable
+      AUTH_SERVICE_URL: http://auth-service:8001
+      PORT: 8002
+    depends_on:
+      auth-service:
+        condition: service_started
+      postgres-flags:
+        condition: service_healthy
+
+  targeting-service:
+    build: ./targeting-service-main
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgres://admin:123@postgres-targeting:5432/targeting_db
+      AUTH_SERVICE_URL: http://auth-service:8001
+      PORT: 8003
+    depends_on:
+      auth-service:
+        condition: service_started
+      postgres-targeting:
+        condition: service_healthy
+    
+  postgres-auth:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: auth_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+      - ./auth-service-main/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  postgres-flags:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: flags_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d flags_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - flags_data:/var/lib/postgresql/data
+      - ./flag-service-main/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  postgres-targeting:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: targeting_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d targeting_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - targeting_data:/var/lib/postgresql/data
+      - ./targeting-service-main/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  auth_data:
+  flags_data:
+  targeting_data:

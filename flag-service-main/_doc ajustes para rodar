@@ -1,0 +1,49 @@
+Dockerfile do python 
+apenas com 1 stage pq não precisa de compilação
+
+criar a rede
+docker network create togglemaster-net
+
+banco
+
+docker run -d \
+  --name postgres-flags \
+  --network togglemaster-net \
+  -e POSTGRES_USER=admin \
+  -e POSTGRES_PASSWORD=123 \
+  -e POSTGRES_DB=flags_db \
+  -p 5433:5432 \
+  postgres:16
+
+Erro: ImportError: cannot import name 'url_quote' from werkzeug.urls
+Ajustes do Flask
+Flask==2.3.3
+Werkzeug==2.3.8
+gunicorn==20.1.0
+python-dotenv==0.21.0
+requests==2.28.1
+psycopg2-binary==2.9.5
+
+
+#alteração para esperar o banco subir no docker compose
+pool = None
+
+for tentativa in range(10):
+    try:
+        pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL)
+        log.info("Pool de conexões com o PostgreSQL inicializado.")
+        break
+
+    except psycopg2.OperationalError as e:
+        log.warning(
+            f"Banco ainda não está pronto (tentativa {tentativa + 1}/10)."
+        )
+        time.sleep(3)
+
+if pool is None:
+    log.critical("Não foi possível conectar ao PostgreSQL.")
+    sys.exit(1)
+
+#--- fim da alteração
+
+E ajustes no docker compose
