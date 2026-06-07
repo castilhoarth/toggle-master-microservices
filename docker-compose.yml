@@ -39,7 +39,30 @@ services:
         condition: service_started
       postgres-targeting:
         condition: service_healthy
-    
+
+  evaluation-service:
+    build: ./evaluation-service-main
+    ports:
+      - "8004:8004"
+    environment:
+      PORT: 8004
+      REDIS_URL: redis://redis:6379
+      FLAG_SERVICE_URL: http://flag-service:8002
+      TARGETING_SERVICE_URL: http://targeting-service:8003
+      SERVICE_API_KEY: tm_key_1124876275eaafa52fef73dbbc793b41cc3f9123b11a40f34f15a226adcec6e4
+      AWS_ACCESS_KEY_ID: ${aws_access_key_id}
+      AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
+      AWS_SESSION_TOKEN: ${aws_session_token}
+      AWS_REGION: us-east-1
+      AWS_SQS_URL: ${AWS_SQS_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      flag-service:
+        condition: service_started
+      targeting-service:
+        condition: service_started
+
   postgres-auth:
     image: postgres:16
     environment:
@@ -84,6 +107,16 @@ services:
     volumes:
       - targeting_data:/var/lib/postgresql/data
       - ./targeting-service-main/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   auth_data:

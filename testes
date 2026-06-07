@@ -69,3 +69,8 @@ gerusa@Orion:~/Documentos/GitHub$ curl -X PUT http://localhost:8002/flags/enable
 -H "Authorization: Bearer tm_key_8b3c4d01b1f59654198b4752da50756f31a605aad574028b1dc354bf7f7f1d24" \
 -d '{"is_enabled": false}'
 {"created_at":"Sun, 07 Jun 2026 16:03:59 GMT","description":"Ativa o novo dashboard para usu\u00e1rios","id":1,"is_enabled":false,"name":"enable-new-dashboard","updated_at":"Sun, 07 Jun 2026 16:13:54 GMT"}
+
+
+curl http://localhost:8004/health
+
+curl "http://localhost:8004/evaluate?user_id=user-123&flag_name=enable-new-dashboard-1780855960"
