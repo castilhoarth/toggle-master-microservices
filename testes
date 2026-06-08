@@ -76,13 +76,81 @@ curl http://localhost:8004/health
 curl "http://localhost:8004/evaluate?user_id=user-123&flag_name=enable-new-dashboard-1780855960"
 
 
-luation-service-1  | 2026/06/08 00:03:17 Cache HIT para flag 'enable-new-dashboard-1780855960'
-evaluation-service-1  | 2026/06/08 00:03:17 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
-analytics-service-1   | 2026-06-08 00:03:17,924 - INFO - Recebidas 1 mensagens.
-analytics-service-1   | 2026-06-08 00:03:17,924 - INFO - Processando mensagem ID: a983ca97-bc74-423d-97c1-12fa3e80e205
-analytics-service-1   | 2026-06-08 00:03:18,128 - INFO - Evento 438d6d97-9223-4438-9032-be8741184251 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
-evaluation-service-1  | 2026/06/08 00:03:22 Cache HIT para flag 'enable-new-dashboard-1780855960'
-evaluation-service-1  | 2026/06/08 00:03:22 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
-analytics-service-1   | 2026-06-08 00:03:22,532 - INFO - Recebidas 1 mensagens.
-analytics-service-1   | 2026-06-08 00:03:22,532 - INFO - Processando mensagem ID: 4da81046-fea0-4074-83cb-1677b0b61f93
-analytics-service-1   | 2026-06-08 00:03:22,735 - INFO - Evento 5d8b9fd5-9e92-4467-b7e7-d3951e63006b (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+postgres-flags-1      | 2026-06-08 00:17:43.776 UTC [27] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.404 s, sync=0.005 s, total=0.418 s; sync files=5, longest=0.004 s, average=0.001 s; distance=2 kB, estimate=2 kB; lsn=0/196B848, redo lsn=0/196B810
+postgres-auth-1       | 2026-06-08 00:17:43.929 UTC [26] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.403 s, sync=0.006 s, total=0.418 s; sync files=5, longest=0.003 s, average=0.002 s; distance=2 kB, estimate=2 kB; lsn=0/196A5D0, redo lsn=0/196A598
+postgres-targeting-1  | 2026-06-08 00:17:43.963 UTC [27] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.404 s, sync=0.003 s, total=0.414 s; sync files=5, longest=0.001 s, average=0.001 s; distance=3 kB, estimate=3 kB; lsn=0/196BDE0, redo lsn=0/196BDA8
+auth-service-1        | 2026/06/08 00:19:31 Nova chave criada com sucesso (ID: 9, Name: teste-automacao)
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780877969' criada com sucesso.
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780877969' atualizada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780877969' criada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780877969' atualizada com sucesso.
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780877969' deletada com sucesso.
+evaluation-service-1  | 2026/06/08 00:19:31 Cache MISS para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:19:31 Cache HIT para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:19:31 Cache HIT para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:19:31 Cache HIT para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:19:32 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:19:32 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:19:32 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:19:32 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+analytics-service-1   | 2026-06-08 00:19:32,881 - INFO - Recebidas 4 mensagens.
+analytics-service-1   | 2026-06-08 00:19:32,882 - INFO - Processando mensagem ID: 1bc7afd1-631d-4a0b-a34b-ce6d4aa4a829
+analytics-service-1   | 2026-06-08 00:19:33,427 - INFO - Evento 3c52614b-d9cd-4e98-b342-5128f6cf87a4 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:19:33,554 - INFO - Processando mensagem ID: 5af568ee-a5d2-4e20-ad11-fa3b9616623d
+analytics-service-1   | 2026-06-08 00:19:33,674 - INFO - Evento edccaf96-71f1-43a4-80a9-09e98c69dd0c (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:19:33,827 - INFO - Processando mensagem ID: 217320a9-29c7-4b81-88d2-fd9116bc4113
+analytics-service-1   | 2026-06-08 00:19:34,033 - INFO - Evento fc2eb27d-a996-42dc-80ad-4140e4563824 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:19:34,237 - INFO - Processando mensagem ID: 2f34ad40-2d63-491d-aca3-b1ddd5b3b4ce
+analytics-service-1   | 2026-06-08 00:19:34,443 - INFO - Evento 2cf93b28-b1be-46e3-8fcb-c82391db8810 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+auth-service-1        | 2026/06/08 00:21:58 Nova chave criada com sucesso (ID: 10, Name: teste-automacao)
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878116' criada com sucesso.
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878116' atualizada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780878116' criada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780878116' atualizada com sucesso.
+evaluation-service-1  | 2026/06/08 00:21:58 Cache MISS para flag 'enable-new-dashboard-1780878116'
+evaluation-service-1  | 2026/06/08 00:21:58 Cache HIT para flag 'enable-new-dashboard-1780878116'
+evaluation-service-1  | 2026/06/08 00:21:58 Cache MISS para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:21:58 Cache HIT para flag 'enable-new-dashboard-1780855960'
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878116' deletada com sucesso.
+evaluation-service-1  | 2026/06/08 00:21:59 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:21:59 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780878116)
+evaluation-service-1  | 2026/06/08 00:21:59 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:21:59 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780878116)
+analytics-service-1   | 2026-06-08 00:21:59,846 - INFO - Recebidas 4 mensagens.
+analytics-service-1   | 2026-06-08 00:21:59,846 - INFO - Processando mensagem ID: 9bd9f28d-c2af-4c7e-8230-a4630274482e
+analytics-service-1   | 2026-06-08 00:22:00,364 - INFO - Evento d86f5f49-3210-4200-be73-0956be9b6959 (Flag: enable-new-dashboard-1780878116) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:22:00,496 - INFO - Processando mensagem ID: cec35bb8-93e4-4e83-b223-c94a3c65ab17
+analytics-service-1   | 2026-06-08 00:22:00,678 - INFO - Evento 37d45d60-f1ee-4eb2-966b-0d7e705c4373 (Flag: enable-new-dashboard-1780878116) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:22:00,797 - INFO - Processando mensagem ID: b782f136-f340-47b7-8571-2ee9e94d62f1
+analytics-service-1   | 2026-06-08 00:22:00,917 - INFO - Evento a3c0035f-2372-441c-9850-68bf546a1d56 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:22:01,081 - INFO - Processando mensagem ID: 3c659247-9d7b-4ebe-978b-2774aa984195
+analytics-service-1   | 2026-06-08 00:22:01,286 - INFO - Evento 77e7b689-920c-4d5e-afa8-c2576190319c (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+postgres-flags-1      | 2026-06-08 00:22:43.868 UTC [27] LOG:  checkpoint starting: time
+postgres-auth-1       | 2026-06-08 00:22:44.012 UTC [26] LOG:  checkpoint starting: time
+postgres-targeting-1  | 2026-06-08 00:22:44.063 UTC [27] LOG:  checkpoint starting: time
+postgres-flags-1      | 2026-06-08 00:22:44.303 UTC [27] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.404 s, sync=0.006 s, total=0.436 s; sync files=5, longest=0.004 s, average=0.002 s; distance=3 kB, estimate=3 kB; lsn=0/196C7B8, redo lsn=0/196C780
+postgres-auth-1       | 2026-06-08 00:22:44.432 UTC [26] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.404 s, sync=0.006 s, total=0.420 s; sync files=5, longest=0.003 s, average=0.002 s; distance=3 kB, estimate=3 kB; lsn=0/196B258, redo lsn=0/196B220
+postgres-targeting-1  | 2026-06-08 00:22:44.477 UTC [27] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.404 s, sync=0.002 s, total=0.414 s; sync files=5, longest=0.001 s, average=0.001 s; distance=4 kB, estimate=4 kB; lsn=0/196CED0, redo lsn=0/196CE98
+auth-service-1        | 2026/06/08 00:27:47 Nova chave criada com sucesso (ID: 11, Name: teste-automacao)
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878465' criada com sucesso.
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878465' atualizada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780878465' criada com sucesso.
+targeting-service-1   | INFO:app:Regra para 'enable-new-dashboard-1780878465' atualizada com sucesso.
+evaluation-service-1  | 2026/06/08 00:27:47 Cache MISS para flag 'enable-new-dashboard-1780878465'
+evaluation-service-1  | 2026/06/08 00:27:47 Cache HIT para flag 'enable-new-dashboard-1780878465'
+evaluation-service-1  | 2026/06/08 00:27:47 Cache MISS para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:27:47 Cache HIT para flag 'enable-new-dashboard-1780855960'
+flag-service-1        | INFO:app:Flag 'enable-new-dashboard-1780878465' deletada com sucesso.
+evaluation-service-1  | 2026/06/08 00:27:47 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:27:47 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780878465)
+evaluation-service-1  | 2026/06/08 00:27:47 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+evaluation-service-1  | 2026/06/08 00:27:47 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780878465)
+analytics-service-1   | 2026-06-08 00:27:47,755 - INFO - Recebidas 4 mensagens.
+analytics-service-1   | 2026-06-08 00:27:47,755 - INFO - Processando mensagem ID: baa957d5-fb3a-413e-aaba-9789e56a1257
+analytics-service-1   | 2026-06-08 00:27:48,327 - INFO - Evento b75fd32e-725c-44df-9897-f376adcb6edd (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:27:48,447 - INFO - Processando mensagem ID: f7dc05e7-7474-436f-b5f0-3ffddbffcc03
+analytics-service-1   | 2026-06-08 00:27:48,576 - INFO - Evento 34edb1bf-13b8-40ed-b724-a74b9352f1a5 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:27:48,737 - INFO - Processando mensagem ID: d54452a2-4d88-4535-9472-ecde5ad706d1
+analytics-service-1   | 2026-06-08 00:27:48,951 - INFO - Evento 415d6d6d-3328-44a9-b1ef-b7f7af5fe8f8 (Flag: enable-new-dashboard-1780878465) salvo no DynamoDB.
+analytics-service-1   | 2026-06-08 00:27:49,248 - INFO - Processando mensagem ID: 2d9820ac-1670-4ef6-8dd3-41bc12b2fb40
+analytics-service-1   | 2026-06-08 00:27:49,452 - INFO - Evento db4c5ff6-81fe-4869-97f7-3ca34bfc0c89 (Flag: enable-new-dashboard-1780878465) salvo no DynamoDB.
