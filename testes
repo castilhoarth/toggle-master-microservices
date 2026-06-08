@@ -74,3 +74,15 @@ gerusa@Orion:~/Documentos/GitHub$ curl -X PUT http://localhost:8002/flags/enable
 curl http://localhost:8004/health
 
 curl "http://localhost:8004/evaluate?user_id=user-123&flag_name=enable-new-dashboard-1780855960"
+
+
+luation-service-1  | 2026/06/08 00:03:17 Cache HIT para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:03:17 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+analytics-service-1   | 2026-06-08 00:03:17,924 - INFO - Recebidas 1 mensagens.
+analytics-service-1   | 2026-06-08 00:03:17,924 - INFO - Processando mensagem ID: a983ca97-bc74-423d-97c1-12fa3e80e205
+analytics-service-1   | 2026-06-08 00:03:18,128 - INFO - Evento 438d6d97-9223-4438-9032-be8741184251 (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.
+evaluation-service-1  | 2026/06/08 00:03:22 Cache HIT para flag 'enable-new-dashboard-1780855960'
+evaluation-service-1  | 2026/06/08 00:03:22 Evento de avaliação enviado para SQS (Flag: enable-new-dashboard-1780855960)
+analytics-service-1   | 2026-06-08 00:03:22,532 - INFO - Recebidas 1 mensagens.
+analytics-service-1   | 2026-06-08 00:03:22,532 - INFO - Processando mensagem ID: 4da81046-fea0-4074-83cb-1677b0b61f93
+analytics-service-1   | 2026-06-08 00:03:22,735 - INFO - Evento 5d8b9fd5-9e92-4467-b7e7-d3951e63006b (Flag: enable-new-dashboard-1780855960) salvo no DynamoDB.

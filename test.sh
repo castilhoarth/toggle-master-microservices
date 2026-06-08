@@ -7,10 +7,16 @@
 BASE_URL_AUTH=${BASE_URL_AUTH:-http://localhost:8001}
 BASE_URL_FLAG=${BASE_URL_FLAG:-http://localhost:8002}
 BASE_URL_TARGETING=${BASE_URL_TARGETING:-http://localhost:8003}
+BASE_URL_EVALUATION=${BASE_URL_EVALUATION:-http://localhost:8004}
+BASE_URL_ANALYTICS=${BASE_URL_ANALYTICS:-http://localhost:8005}
 
 MASTER_KEY=${MASTER_KEY:-admin-secreto-123}
 
 FLAG_NAME="enable-new-dashboard-$(date +%s)"
+
+USER_NAME1="user-$(date +%s)"
+sleep 2
+USER_NAME2="user-$(date +%s)"
 
 echo ""
 echo "========================================"
@@ -19,6 +25,8 @@ echo "========================================"
 echo "AUTH      : $BASE_URL_AUTH"
 echo "FLAG      : $BASE_URL_FLAG"
 echo "TARGETING : $BASE_URL_TARGETING"
+echo "EVALUATION : $BASE_URL_EVALUATION"
+echo "ANALYTICS : $BASE_URL_ANALYTICS"
 echo ""
 
 ########################################
@@ -38,6 +46,14 @@ echo
 echo
 
 curl "$BASE_URL_TARGETING/health"
+echo
+echo
+
+curl "$BASE_URL_EVALUATION/health"
+echo
+echo
+
+curl "$BASE_URL_ANALYTICS/health"
 echo
 echo
 
@@ -235,7 +251,57 @@ echo ""
 echo ""
 
 echo "========================================"
-echo "10. Deletando Flag"
+echo "10. Testando a fila SQS e o processamento"
+echo "========================================"
+
+echo "user 1 - $USER_NAME1"
+
+for i in 1 2
+do
+  echo "=== Request $i ==="
+
+  HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+    "$BASE_URL_EVALUATION/evaluate?user_id=$USER_NAME1&flag_name=$FLAG_NAME" \
+    )
+
+  if [ "$HTTP_CODE" != "200" ]; then
+      echo "ERRO na tentativa $i (HTTP $HTTP_CODE)"
+      cat response.json
+      exit 1
+  fi
+
+  cat response.json
+  echo -e "\n"
+done
+
+echo ""
+echo ""
+
+echo "user 2 - $USER_NAME2"
+
+for i in 1 2
+do
+  echo "=== Request $i ==="
+
+  HTTP_CODE=$(curl -s -o response.json -w "%{http_code}" \
+    "$BASE_URL_EVALUATION/evaluate?user_id=$USER_NAME2&flag_name=enable-new-dashboard-1780855960" \
+    )
+
+  if [ "$HTTP_CODE" != "200" ]; then
+      echo "ERRO na tentativa $i (HTTP $HTTP_CODE)"
+      cat response.json
+      exit 1
+  fi
+
+  cat response.json
+  echo -e "\n"
+done
+
+echo ""
+echo ""
+
+echo "========================================"
+echo "11. Deletando Flag"
 echo "========================================"
 
 echo "FLAG_NAME=$FLAG_NAME"

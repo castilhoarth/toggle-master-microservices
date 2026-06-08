@@ -20,3 +20,7 @@ retirar do evaluator.go:
 
 inserir
 "os"
+
+criar a fila do sqs
+pegar a url
+e as credenciais da aws Academy
