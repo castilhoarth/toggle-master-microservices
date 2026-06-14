@@ -468,15 +468,17 @@ Esse teste pode ser usado depois para Produção, só trocando as urls de acesso
 
 [Plano de Teste](./test.sh)
 
-Testes realizados:
+##### Ajustes
 
 Ao startar o lab é necessário pegar as novas credenciais e colocar no .env
 
-Ativando o docker-compose:
+##### Ativando o docker-compose:
 
 <img src="./img/image-20260614123043349.png" alt="image-20260614123043349" style="zoom:200%;" />
 
-Rodando o teste automatizado:
+##### Rodando o teste automatizado
+
+No terminal do projeto: $./test.sh
 
 ```
 ========================================
@@ -570,15 +572,19 @@ Flag removida com sucesso.
 TESTE FINALIZADO COM SUCESSO
 ```
 
-Verificando os logs dos Serviços:
+##### Verificando os logs dos Serviços
 
 <img src="./img/image-20260614124109034.png" alt="image-20260614124109034" style="zoom:200%;" />
 
-Verificando na AWS: No Dynamo DB
+##### Verificando na AWS
+
+No Dynamo DB
 
 <img src="./img/image-20260614124423795.png" alt="image-20260614124423795" style="zoom:200%;" />
 
-E no SQS tá zerado.
+E no SQS aparece vazio.
+
+Porque o Analytics apaga da fila após o processamento.
 
 <img src="./img/image-20260614124825626.png" alt="image-20260614124825626" style="zoom:150%;" />
 
