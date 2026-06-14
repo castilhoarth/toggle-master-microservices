@@ -394,7 +394,7 @@ No docker-compose, foram colocadas as dependências com os outros serviços e o 
 ```
 ### 3.5 analytics-service
 
-Aplicação em Python
+Aplicação em Python conectada ao DynamoDB na AWS e consumindo a fila SQS.
 
 Durante a importação das bibliotecas, verificamos erros de versão do Flask.
 
