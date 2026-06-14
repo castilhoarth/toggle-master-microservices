@@ -464,6 +464,8 @@ Para o teste local, foi criado um dockercompose e uma rede local, assim como vol
 
 Foi criado um plano de teste em bash para testar os serviços: auth, flags, targeting e evaluation.
 
+Esse teste pode ser usado depois para Produção, só trocando as urls de acesso.
+
 ```
 #!/bin/bash
 
