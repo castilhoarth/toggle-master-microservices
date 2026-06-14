@@ -570,7 +570,7 @@ Flag removida com sucesso.
 TESTE FINALIZADO COM SUCESSO
 ```
 
-Verificando nos logs o Evaluation:
+Verificando os logs dos Serviços:
 
 <img src="./img/image-20260614124109034.png" alt="image-20260614124109034" style="zoom:200%;" />
 
