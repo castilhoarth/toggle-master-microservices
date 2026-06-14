@@ -82,3 +82,25 @@ gerar executável
 🧊 2. runtime stage
 só roda o binário
 sem Go instalado
+
+	//alteração para esperar o banco subir
+	var db *sql.DB
+	var err error
+
+	for i := 0; i < 10; i++ {
+		db, err = connectDB(databaseURL)
+		if err == nil {
+			break
+		}
+
+		log.Println("Banco ainda não está pronto... tentando novamente")
+		time.Sleep(2 * time.Second)
+	}
+
+	if err != nil {
+		log.Fatalf("Não foi possível conectar ao banco de dados após retries: %v", err)
+	}
+	defer db.Close()
+
+	//---- alteração
+	e o import: "time"

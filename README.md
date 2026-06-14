@@ -22,7 +22,7 @@ A arquitetura foi dividida nos em 5 microsserviços:
 
 - **analytics-service (Python)**: Consome eventos de uma fila e salva dados de análise. (Fila: AWS SQS, Banco de Dados: AWS DynamoDB)
 
-A missão de desse projeto é projetar e implementar a infraestrutura de contêineres e orquestração para colocar esse novo ecossistema em produção na AWS.
+A missão desse projeto é projetar e implementar a infraestrutura de contêineres e orquestração para colocar esse novo ecossistema em produção na AWS.
 
 ## 3. Teste Local e criação dos Dockerfiles
 

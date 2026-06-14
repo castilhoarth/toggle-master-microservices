@@ -30,33 +30,12 @@ if not DATABASE_URL or not AUTH_SERVICE_URL:
 # --- Pool de Conexão com o Banco ---
 # Inicializa o pool de conexões (Mín: 1, Máx: 5 conexões)
 
-#try:
-#    pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL)
-#    log.info("Pool de conexões com o PostgreSQL inicializado.")
-#except psycopg2.OperationalError as e:
-#    log.critical(f"Erro fatal ao conectar ao PostgreSQL: {e}")
-#    sys.exit(1)
-
-#alteração para esperar o banco subir no docker compose
-pool = None
-
-for tentativa in range(10):
-    try:
-        pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL)
-        log.info("Pool de conexões com o PostgreSQL inicializado.")
-        break
-
-    except psycopg2.OperationalError as e:
-        log.warning(
-            f"Banco ainda não está pronto (tentativa {tentativa + 1}/10)."
-        )
-        time.sleep(3)
-
-if pool is None:
-    log.critical("Não foi possível conectar ao PostgreSQL.")
+try:
+    pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL)
+    log.info("Pool de conexões com o PostgreSQL inicializado.")
+except psycopg2.OperationalError as e:
+    log.critical(f"Erro fatal ao conectar ao PostgreSQL: {e}")
     sys.exit(1)
-
-#--- fim da alteração
 
 
 # --- Middleware de Autenticação ---
