@@ -1,4 +1,9 @@
-
+ordem:
+auth
+flags
+targeting
+evaluation
+analytics
 
 gerusa@Orion:~/Documentos/GitHub$ curl -X POST http://localhost:8001/admin/keys \
 -H "Content-Type: application/json" \

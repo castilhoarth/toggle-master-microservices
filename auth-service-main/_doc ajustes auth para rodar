@@ -83,7 +83,7 @@ gerar executável
 só roda o binário
 sem Go instalado
 
-Com o ajuste do Docker compose não precisa mais:
+Com o ajuste do Docker compose não precisou mais:
 
 	//alteração para esperar o banco subir
 	var db *sql.DB

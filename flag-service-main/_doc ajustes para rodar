@@ -24,6 +24,7 @@ python-dotenv==0.21.0
 requests==2.28.1
 psycopg2-binary==2.9.5
 
+
 Com o ajuste do Docker compose não precisa mais:
 
 #alteração para esperar o banco subir no docker compose
@@ -46,5 +47,3 @@ if pool is None:
     sys.exit(1)
 
 #--- fim da alteração
-
-E ajustes no docker compose
