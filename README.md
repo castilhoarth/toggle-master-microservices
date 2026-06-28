@@ -770,3 +770,57 @@ O Fluxo está rodando corretamente:
 
 <img src="./img/image-20260614124731715.png" alt="image-20260614124731715" style="zoom:150%;" />
 
+### 3.7 Deploy do Repositório e Teste Local
+
+
+
+Depois do clone do Repositório, é preciso criar um .env com os seguintes dados:
+
+- SERVICE_API_KEY
+
+- AWS_DYNAMODB_TABLE="ToggleMasterAnalytics"
+
+- AWS_DYNAMODB_ENDPOINT=http://dynamodb-local:8000
+
+- aws_region=us-east-1
+
+- AWS_SQS_URL
+
+- aws_access_key_id
+
+- aws_secret_access_key
+
+- aws_session_token
+
+
+
+Como o SQS fica na AWS, os dados de:
+
+- aws_access_key_id
+
+- aws_secret_access_key
+
+- aws_session_token
+
+Caso esteja usando o Lab, esses dados são obtidos em: AWS Details/AWS CLI/show
+
+![image-20260628155338416](./img/image-20260628155338416.png)
+
+
+
+E é necessário criar uma fila SQS na AWS e colocar a url no AWS_SQS_URL
+
+
+
+Para a primeira execução é necessário:
+
+- Subir o auth com seu banco e criar um a API_KEY essa API_Key será usada no .env como SERVICE_API_KEY.
+
+- Subir o dynamo e criar a tabela "ToggleMasterAnalytics".
+
+
+
+Na sequencia, dar o comando: docker compose down e, depois um docker compose up.
+
+
+
