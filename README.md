@@ -74,6 +74,8 @@ EXPOSE 8001
 CMD ["./auth-service"]
 ```
 
+Imagem: 30.4MB
+
 [Dockerfile](auth-service-main/Dockerfile)
 
 [ReadMe do Auth Service](auth-service-main/README.md)
@@ -154,25 +156,47 @@ requests==2.28.1
 
 Dockerfile: 
 
+Apesar do Python não precisar compilar, colocamos 2 estágios para poder deixar a imagem final menor copiando apenas o necessário, com uma redução de 541M para 210M = 61%
+
 ```
+# ==========================
+# Build Stage
+# ==========================
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# Instala as dependências necessárias para build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# Instala as dependências em um diretório separado
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ==========================
+# Runtime Stage
+# ==========================
+
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# dependências do sistema (opcional mas recomendado)
-RUN apt-get update && apt-get install -y gcc
+# Copia as dependências já instaladas
+COPY --from=builder /install /usr/local
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
+# Copia o código da aplicação
+COPY app.py .
+COPY db ./db
 
 EXPOSE 8002
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8002", "app:app"]
 ```
 
-Como o python não precisa compilar, não precisa das duas fases como no Go.
+Imagem: 210MB
 
 [Dockerfile](flag-service-main/Dockerfile)
 
@@ -232,25 +256,46 @@ requests==2.28.1
 
 Dockerfile:
 
+Apesar do Python não precisar compilar, colocamos 2 estágios para poder deixar a imagem final menor copiando apenas o necessário, com uma redução de 529M para 210M = 60%
+
 ```
-FROM python:3.11-slim
+# ==========================
+# Build Stage
+# ==========================
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-# Dependências necessárias para psycopg2
-RUN apt-get update && apt-get install -y gcc libpq-dev && \
+# Instala as dependências necessárias para build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Instala as dependências em um diretório separado
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-COPY . .
+# ==========================
+# Runtime Stage
+# ==========================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copia as dependências já instaladas
+COPY --from=builder /install /usr/local
+
+# Copia o código da aplicação
+COPY app.py .
+COPY db ./db
 
 EXPOSE 8003
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8003", "app:app"]
 ```
+Imagem: 210M
+
 [Dockerfile](targeting-service-main/Dockerfile)
 
 [ReadMe do Targeting Service](targeting-service-main/README.md)
@@ -314,31 +359,48 @@ Retiramos do evaluation Go o "context" e inserimos o "os"
 Dockerfile:
 
 ```
-FROM golang:1.21 AS builder
+# ==========================
+# Build Stage
+# ==========================
+FROM python:3.11-slim AS builder
+
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY go.mod .
-COPY go.sum .
+# Instala as dependências necessárias para build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN go mod download
+COPY requirements.txt .
 
-COPY . .
+# Instala as dependências em um diretório separado
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o evaluation-service .
+# ==========================
+# Runtime Stage
+# ==========================
+FROM python:3.11-slim
 
-FROM alpine:3.20
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates
+# Copia as dependências já instalada
+COPY --from=builder /install /usr/local
 
-COPY --from=builder /app/evaluation-service .
+# Copia o código da aplicação
+COPY app.py .
+COPY db ./db
 
-EXPOSE 8004
+EXPOSE 8005
 
-CMD ["./evaluation-service"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8005", "app:app"]
 ```
+
+Imagem: 35.7MB
 
 [Dockerfile](evaluation-service-main/Dockerfile)
 
@@ -407,25 +469,117 @@ python-dotenv==0.21.0
 boto3>=1.34.0
 ```
 
-Dockerfile:
+Para uso com o DynamoDB Local no lugar do Dynamo da AWS, foi necessária a criação de uma variável de ambiente e ajustado o código da aplicação: AWS_DYNAMODB_ENDPOINT
 
 ```
+# --- Configuração ---
+AWS_REGION = os.getenv("AWS_REGION")
+SQS_QUEUE_URL = os.getenv("AWS_SQS_URL")
+DYNAMODB_TABLE_NAME = os.getenv("AWS_DYNAMODB_TABLE")
+DYNAMODB_ENDPOINT = os.getenv("AWS_DYNAMODB_ENDPOINT") #alteração para uso local <----
+
+if not all([AWS_REGION, SQS_QUEUE_URL, DYNAMODB_TABLE_NAME]):
+    log.critical("Erro: AWS_REGION, AWS_SQS_URL, e AWS_DYNAMODB_TABLE devem ser definidos.")
+    sys.exit(1)
+
+# --- Clientes Boto3 ---
+# Criamos a sessão uma vez
+try:
+    session = boto3.Session(region_name=AWS_REGION)
+    sqs_client = session.client("sqs")
+    
+    #alteração para uso local tb ------>
+    
+    #dynamodb_client = session.client("dynamodb")
+
+    if DYNAMODB_ENDPOINT:
+        log.info(f"Usando DynamoDB Local: {DYNAMODB_ENDPOINT}")
+
+        dynamodb_client = session.client(
+            "dynamodb",
+            endpoint_url=DYNAMODB_ENDPOINT,
+            aws_access_key_id="dummy",
+            aws_secret_access_key="dummy",
+        )
+    else:
+        log.info("Usando DynamoDB AWS")
+
+        dynamodb_client = session.client("dynamodb")
+    
+    # fim da alteração --------
+
+    log.info(f"Clientes Boto3 inicializados na região {AWS_REGION}")
+
+
+except NoCredentialsError:
+    log.critical("Credenciais da AWS não encontradas. Verifique seu ambiente.")
+    sys.exit(1)
+except Exception as e:
+    log.critical(f"Erro ao inicializar o Boto3: {e}")
+    sys.exit(1)
+
+```
+
+Foi necessário subir o Dynamo e criar a tabela previamente para a primeira execução:
+
+```
+aws dynamodb create-table \
+  --table-name ToggleMasterAnalytics \
+  --attribute-definitions AttributeName=event_id,AttributeType=S \
+  --key-schema AttributeName=event_id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --endpoint-url http://localhost:8000 \
+  --region us-east-1
+```
+
+E validar se a tabela foi criada:
+
+```
+aws dynamodb list-tables \
+  --endpoint-url http://localhost:8000 \
+  --region us-east-1
+```
+
+Dockerfile:
+
+Apesar do Python não precisar compilar, colocamos 2 estágios para poder deixar a imagem final menor copiando apenas o necessário, com uma redução de 747M para 248M = 67%
+
+```
+# ==========================
+# Build Stage
+# ==========================
+FROM python:3.11-slim AS builder
+
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Instala as dependências necessárias para build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# Instala as dependências em um diretório separado
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ==========================
+# Runtime Stage
+# ==========================
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Copia as dependências já instalada
+COPY --from=builder /install /usr/local
 
-COPY requirements.txt .
-
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
+# Copia o código da aplicação
+COPY app.py .
+COPY db ./db
 
 EXPOSE 8005
 
@@ -474,7 +628,7 @@ Ao startar o lab é necessário pegar as novas credenciais e colocar no .env
 
 ##### Ativando o docker-compose:
 
-<img src="./img/image-20260614123043349.png" alt="image-20260614123043349" style="zoom:200%;" />
+![image-20260628150820249](./img/image-20260628150820249.png)
 
 ##### Rodando o teste automatizado
 
@@ -495,92 +649,116 @@ ANALYTICS : http://localhost:8005
 ========================================
 {"status":"ok"}
 
-{"status":"ok"}
 
 {"status":"ok"}
 
-{"status":"ok"}
 
 {"status":"ok"}
+
+
+{"status":"ok"}
+
+
+{"status":"ok"}
+
+
 
 ========================================
 2. Criando API Key
 ========================================
 API KEY:
-tm_key_ba5215d39245bf92cfa8be3dff38a8a79c87c962f7e25d2763ad6f6fac0dd8a9
+tm_key_b7b0a93428b7134960b11077461b941d4d93b2913b22fbe6d57b3524589e7348
+
 
 ========================================
 3. Criando Flag
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","description":"Teste automatizado","id":12,"is_enabled":true,"name":"enable-new-dashboard-1781451120","updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","description":"Teste automatizado","id":24,"is_enabled":true,"name":"enable-new-dashboard-1782671375","updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 4. Listando Flags
 ========================================
 Flags encontradas:
 enable-new-dashboard-1780855960
-enable-new-dashboard-1781451120
+enable-new-dashboard-1782671375
+
 
 ========================================
 5. Consultando Flag
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","description":"Teste automatizado","id":12,"is_enabled":true,"name":"enable-new-dashboard-1781451120","updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","description":"Teste automatizado","id":24,"is_enabled":true,"name":"enable-new-dashboard-1782671375","updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 6. Atualizando Flag
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","description":"Teste automatizado","id":12,"is_enabled":false,"name":"enable-new-dashboard-1781451120","updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","description":"Teste automatizado","id":24,"is_enabled":false,"name":"enable-new-dashboard-1782671375","updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 7. Criando Regra de Targeting
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","flag_name":"enable-new-dashboard-1781451120","id":12,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":50},"updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","flag_name":"enable-new-dashboard-1782671375","id":24,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":50},"updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 8. Consultando Regra
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","flag_name":"enable-new-dashboard-1781451120","id":12,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":50},"updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","flag_name":"enable-new-dashboard-1782671375","id":24,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":50},"updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 9. Atualizando Regra
 ========================================
-{"created_at":"Sun, 14 Jun 2026 15:32:02 GMT","flag_name":"enable-new-dashboard-1781451120","id":12,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":75},"updated_at":"Sun, 14 Jun 2026 15:32:02 GMT"}
+{"created_at":"Sun, 28 Jun 2026 18:29:37 GMT","flag_name":"enable-new-dashboard-1782671375","id":24,"is_enabled":true,"rules":{"type":"PERCENTAGE","value":75},"updated_at":"Sun, 28 Jun 2026 18:29:37 GMT"}
+
 
 ========================================
 10. Testando a fila SQS e o processamento
 ========================================
-user 1 - user-1781451120
+user 1 - user-1782671375
 === Request 1 ===
-{"flag_name":"enable-new-dashboard-1781451120","user_id":"user-1781451120","result":false}
+{"flag_name":"enable-new-dashboard-1782671375","user_id":"user-1782671375","result":false}
+
 
 === Request 2 ===
-{"flag_name":"enable-new-dashboard-1781451120","user_id":"user-1781451120","result":false}
+{"flag_name":"enable-new-dashboard-1782671375","user_id":"user-1782671375","result":false}
 
-user 2 - user-1781451122
+
+
+
+user 2 - user-1782671377
 === Request 1 ===
-{"flag_name":"enable-new-dashboard-1780855960","user_id":"user-1781451122","result":false}
+{"flag_name":"enable-new-dashboard-1780855960","user_id":"user-1782671377","result":false}
+
 
 === Request 2 ===
-{"flag_name":"enable-new-dashboard-1780855960","user_id":"user-1781451122","result":false}
+{"flag_name":"enable-new-dashboard-1780855960","user_id":"user-1782671377","result":false}
+
+
+
 
 ========================================
 11. Deletando Flag
 ========================================
-FLAG_NAME=enable-new-dashboard-1781451120
+FLAG_NAME=enable-new-dashboard-1782671375
 Flag removida com sucesso.
+
 
 TESTE FINALIZADO COM SUCESSO
 ```
 
 ##### Verificando os logs dos Serviços
 
-<img src="./img/image-20260614124109034.png" alt="image-20260614124109034" style="zoom:200%;" />
+![image-20260628153031445](./img/image-20260628153031445.png)
+
+Tabela do Dynamo Local
+
+![image-20260628153300362](./img/image-20260628153300362.png)
+
 
 ##### Verificando na AWS
-
-No Dynamo DB
-
-<img src="./img/image-20260614124423795.png" alt="image-20260614124423795" style="zoom:200%;" />
 
 E no SQS aparece vazio.
 

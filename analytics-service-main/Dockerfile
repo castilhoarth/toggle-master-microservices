@@ -1,28 +1,39 @@
-FROM python:3.11-slim
+# ==========================
+# Build Stage
+# ==========================
+FROM python:3.11-slim AS builder
 
-# Evita buffering de logs
 ENV PYTHONUNBUFFERED=1
 
-# Diretório da aplicação
 WORKDIR /app
 
-# Dependências do sistema (necessário para alguns pacotes AWS/Python)
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
+# Instala as dependências necessárias para build
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia requirements primeiro (cache de build melhor)
 COPY requirements.txt .
 
-# Instala dependências Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Instala as dependências em um diretório separado
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ==========================
+# Runtime Stage
+# ==========================
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Copia as dependências já instalada
+COPY --from=builder /install /usr/local
 
 # Copia o código da aplicação
-COPY . .
+COPY app.py .
+COPY db ./db
 
-# Porta do Flask (health check)
 EXPOSE 8005
 
-# Sobe com gunicorn (produção)
 CMD ["gunicorn", "--bind", "0.0.0.0:8005", "app:app"]

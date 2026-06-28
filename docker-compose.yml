@@ -69,6 +69,7 @@ services:
       - "8005:8005"
     environment:
       AWS_DYNAMODB_TABLE: ToggleMasterAnalytics
+      AWS_DYNAMODB_ENDPOINT: http://dynamodb:8000
       AWS_ACCESS_KEY_ID: ${aws_access_key_id}
       AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
       AWS_SESSION_TOKEN: ${aws_session_token}
@@ -135,7 +136,18 @@ services:
       timeout: 3s
       retries: 5
 
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb_data:/data
+    user: "root"
+
 volumes:
   auth_data:
   flags_data:
   targeting_data:
+  dynamodb_data:

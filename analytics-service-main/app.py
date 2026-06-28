@@ -21,6 +21,7 @@ load_dotenv()
 AWS_REGION = os.getenv("AWS_REGION")
 SQS_QUEUE_URL = os.getenv("AWS_SQS_URL")
 DYNAMODB_TABLE_NAME = os.getenv("AWS_DYNAMODB_TABLE")
+DYNAMODB_ENDPOINT = os.getenv("AWS_DYNAMODB_ENDPOINT") #alteração para uso local <----
 
 if not all([AWS_REGION, SQS_QUEUE_URL, DYNAMODB_TABLE_NAME]):
     log.critical("Erro: AWS_REGION, AWS_SQS_URL, e AWS_DYNAMODB_TABLE devem ser definidos.")
@@ -31,8 +32,30 @@ if not all([AWS_REGION, SQS_QUEUE_URL, DYNAMODB_TABLE_NAME]):
 try:
     session = boto3.Session(region_name=AWS_REGION)
     sqs_client = session.client("sqs")
-    dynamodb_client = session.client("dynamodb")
+    
+    #alteração para uso local tb ------>
+    
+    #dynamodb_client = session.client("dynamodb")
+
+    if DYNAMODB_ENDPOINT:
+        log.info(f"Usando DynamoDB Local: {DYNAMODB_ENDPOINT}")
+
+        dynamodb_client = session.client(
+            "dynamodb",
+            endpoint_url=DYNAMODB_ENDPOINT,
+            aws_access_key_id="dummy",
+            aws_secret_access_key="dummy",
+        )
+    else:
+        log.info("Usando DynamoDB AWS")
+
+        dynamodb_client = session.client("dynamodb")
+    
+    # fim da alteração --------
+
     log.info(f"Clientes Boto3 inicializados na região {AWS_REGION}")
+
+
 except NoCredentialsError:
     log.critical("Credenciais da AWS não encontradas. Verifique seu ambiente.")
     sys.exit(1)
