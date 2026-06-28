@@ -32,7 +32,6 @@ COPY --from=builder /install /usr/local
 
 # Copia o código da aplicação
 COPY app.py .
-COPY db ./db
 
 EXPOSE 8005
 
