@@ -410,6 +410,7 @@ Foi criado também um .env para as variáveis de ambiente.
 
 ```
 SERVICE_API_KEY=tm_key_112...
+AWS_DYNAMODB_ENDPOINT: http://dynamodb:8000
 AWS_DYNAMODB_TABLE="ToggleMasterAnalytics"
 aws_region=us-east-1
 AWS_SQS_URL=https://sqs.us-east-1.amazonaws.com/XXXXX.../togglemaster-events
@@ -470,6 +471,8 @@ boto3>=1.34.0
 ```
 
 Para uso com o DynamoDB Local no lugar do Dynamo da AWS, foi necessária a criação de uma variável de ambiente e ajustado o código da aplicação: AWS_DYNAMODB_ENDPOINT
+
+Caso não tenha essa variável, ele vai olhar para o Synamo na AWS.
 
 ```
 # --- Configuração ---
@@ -592,12 +595,13 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8005", "app:app"]
 No docker-compose, foram colocadas as dependências com os outros serviços e as variáveis de ambiente:
 
 ```
-analytics-service:
+  analytics-service:
     build: ./analytics-service-main
     ports:
       - "8005:8005"
     environment:
       AWS_DYNAMODB_TABLE: ToggleMasterAnalytics
+      AWS_DYNAMODB_ENDPOINT: http://dynamodb:8000
       AWS_ACCESS_KEY_ID: ${aws_access_key_id}
       AWS_SECRET_ACCESS_KEY: ${aws_secret_access_key}
       AWS_SESSION_TOKEN: ${aws_session_token}
@@ -608,7 +612,21 @@ analytics-service:
             condition: service_started
           targeting-service:
             condition: service_started
+            
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /data"
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb_data:/data
+    user: "root"
 ```
+
+O dynamodb precisa rodar com o user: root senão não persiste os dados no banco, porque o SQLite falha.
+
+
 
 ### 3.6 Testes Locais
 
