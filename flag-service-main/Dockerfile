@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Instala as dependências necessárias para build
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc && \
+    apt-get install -y --no-install-recommends gcc libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -21,6 +21,11 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 FROM python:3.11-slim
 
 WORKDIR /app
+
+# Instala a biblioteca compartilhada do PostgreSQL necessária pelo psycopg
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libpq5 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copia as dependências já instaladas
 COPY --from=builder /install /usr/local

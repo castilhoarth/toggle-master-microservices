@@ -1,10 +1,9 @@
 import os
 import sys
-import psycopg2
+import psycopg
 import requests
 import json
-from psycopg2.extras import RealDictCursor, Json
-from psycopg2.pool import SimpleConnectionPool
+from psycopg.rows import dict_row
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from functools import wraps
@@ -27,11 +26,12 @@ if not DATABASE_URL or not AUTH_SERVICE_URL:
     log.critical("Erro: DATABASE_URL e AUTH_SERVICE_URL devem ser definidos.")
     sys.exit(1)
 
-# --- Pool de Conexão com o Banco ---
+# --- Conexão com o Banco ---
 try:
-    pool = SimpleConnectionPool(1, 5, dsn=DATABASE_URL)
-    log.info("Pool de conexões com o PostgreSQL (targeting) inicializado.")
-except psycopg2.OperationalError as e:
+    with psycopg.connect(DATABASE_URL, autocommit=False) as conn:
+        conn.close()
+    log.info("Conexão com o PostgreSQL (targeting) inicializada.")
+except psycopg.OperationalError as e:
     log.critical(f"Erro fatal ao conectar ao PostgreSQL: {e}")
     sys.exit(1)
 
@@ -80,43 +80,38 @@ def create_rule():
     rules_obj = data['rules'] # O objeto JSON
     is_enabled = data.get('is_enabled', True)
     
-    conn = None
-    cur = None
+    conn = psycopg.connect(DATABASE_URL, autocommit=False)
     try:
-        conn = pool.getconn()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(
-            "INSERT INTO targeting_rules (flag_name, is_enabled, rules, created_at, updated_at) "
-            "VALUES (%s, %s, %s, NOW(), NOW()) RETURNING *",
-            (flag_name, is_enabled, Json(rules_obj)) # Usa Json() para serializar
-        )
-        new_rule = cur.fetchone()
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "INSERT INTO targeting_rules (flag_name, is_enabled, rules, created_at, updated_at) "
+                "VALUES (%s, %s, %s, NOW(), NOW()) RETURNING *",
+                (flag_name, is_enabled, json.dumps(rules_obj))
+            )
+            new_rule = cur.fetchone()
         conn.commit()
         log.info(f"Regra para '{flag_name}' criada com sucesso.")
         return jsonify(new_rule), 201
-    except psycopg2.IntegrityError:
-        if conn: conn.rollback()
+    except psycopg.IntegrityError:
+        conn.rollback()
         log.warning(f"Tentativa de criar regra duplicada: '{flag_name}'")
         return jsonify({"error": f"Regra para a flag '{flag_name}' já existe"}), 409
     except Exception as e:
-        if conn: conn.rollback()
+        conn.rollback()
         log.error(f"Erro ao criar regra: {e}")
         return jsonify({"error": "Erro interno do servidor", "details": str(e)}), 500
     finally:
-        if cur: cur.close()
-        if conn: pool.putconn(conn)
+        conn.close()
 
 @app.route('/rules/<string:flag_name>', methods=['GET'])
 @require_auth
 def get_rule(flag_name):
     """ Busca uma regra de segmentação pelo nome da flag """
-    conn = None
-    cur = None
+    conn = psycopg.connect(DATABASE_URL, autocommit=False)
     try:
-        conn = pool.getconn()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT * FROM targeting_rules WHERE flag_name = %s", (flag_name,))
-        rule = cur.fetchone()
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM targeting_rules WHERE flag_name = %s", (flag_name,))
+            rule = cur.fetchone()
         if not rule:
             return jsonify({"error": "Regra não encontrada"}), 404
         return jsonify(rule)
@@ -124,8 +119,7 @@ def get_rule(flag_name):
         log.error(f"Erro ao buscar regra '{flag_name}': {e}")
         return jsonify({"error": "Erro interno do servidor", "details": str(e)}), 500
     finally:
-        if cur: cur.close()
-        if conn: pool.putconn(conn)
+        conn.close()
 
 @app.route('/rules/<string:flag_name>', methods=['PUT'])
 @require_auth
@@ -140,7 +134,7 @@ def update_rule(flag_name):
     
     if 'rules' in data:
         fields.append("rules = %s")
-        values.append(Json(data['rules'])) # Serializa o JSON
+        values.append(json.dumps(data['rules']))
     if 'is_enabled' in data:
         fields.append("is_enabled = %s")
         values.append(data['is_enabled'])
@@ -152,52 +146,46 @@ def update_rule(flag_name):
     
     query = f"UPDATE targeting_rules SET {', '.join(fields)} WHERE flag_name = %s RETURNING *"
     
-    conn = None
-    cur = None
+    conn = psycopg.connect(DATABASE_URL, autocommit=False)
     try:
-        conn = pool.getconn()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute(query, tuple(values))
-        
-        if cur.rowcount == 0:
-            return jsonify({"error": "Regra não encontrada"}), 404
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(query, tuple(values))
             
-        updated_rule = cur.fetchone()
+            if cur.rowcount == 0:
+                return jsonify({"error": "Regra não encontrada"}), 404
+                
+            updated_rule = cur.fetchone()
         conn.commit()
         log.info(f"Regra para '{flag_name}' atualizada com sucesso.")
         return jsonify(updated_rule), 200
     except Exception as e:
-        if conn: conn.rollback()
+        conn.rollback()
         log.error(f"Erro ao atualizar regra '{flag_name}': {e}")
         return jsonify({"error": "Erro interno do servidor", "details": str(e)}), 500
     finally:
-        if cur: cur.close()
-        if conn: pool.putconn(conn)
+        conn.close()
 
 @app.route('/rules/<string:flag_name>', methods=['DELETE'])
 @require_auth
 def delete_rule(flag_name):
     """ Deleta a regra de segmentação de uma flag """
-    conn = None
-    cur = None
+    conn = psycopg.connect(DATABASE_URL, autocommit=False)
     try:
-        conn = pool.getconn()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM targeting_rules WHERE flag_name = %s", (flag_name,))
-        
-        if cur.rowcount == 0:
-            return jsonify({"error": "Regra não encontrada"}), 404
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM targeting_rules WHERE flag_name = %s", (flag_name,))
             
+            if cur.rowcount == 0:
+                return jsonify({"error": "Regra não encontrada"}), 404
+                
         conn.commit()
         log.info(f"Regra para '{flag_name}' deletada com sucesso.")
         return "", 204 # 204 No Content
     except Exception as e:
-        if conn: conn.rollback()
+        conn.rollback()
         log.error(f"Erro ao deletar regra '{flag_name}': {e}")
         return jsonify({"error": "Erro interno do servidor", "details": str(e)}), 500
     finally:
-        if cur: cur.close()
-        if conn: pool.putconn(conn)
+        conn.close()
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 8003))
